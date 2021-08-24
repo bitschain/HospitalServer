@@ -74,6 +74,17 @@ WSGI_APPLICATION = 'hospital_server.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
+#DATABASES = {
+#   'default': {
+#        'ENGINE': 'django.db.backends.postgresql_psycopg2',         # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+#        'NAME': 'hospital',                                       # Or path to database file if using sqlite3.
+#        'USER': 'admin',                                             # Not used with sqlite3.
+#        'PASSWORD': 'password',                                 # Not used with sqlite3.
+#        'HOST': '127.0.0.1',            
+#        'PORT': '5432', 
+#    }
+#}
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
