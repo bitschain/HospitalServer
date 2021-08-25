@@ -20,7 +20,7 @@ def createNewUserSession(request):
         return HttpResponseBadRequest("Patient doesn't exist")
     return HttpResponseBadRequest("Request should be a post request")
 
-
+@csrf_exempt
 def generate_qr_string(request):
     if request.method == 'POST':
         try:
@@ -35,9 +35,15 @@ def generate_qr_string(request):
                 latest_visit.save()
             except Visit.DoesNotExist:
                 return HttpResponse(status=404)
-            proxy_server = 'dummy.com'
-            #TODO: need to update this after discussion
-            qr_string = proxy_server + "/" + latest_visit.session_public_key + "/" + latest_visit.visit_id
-            return HttpResponse(qr_string)
+            proxy_server = 'proxy.com'
+            hospital_server = 'hospital.com'
+            qr_json = {
+                "proxy_server": proxy_server, 
+                "hospital_server": hospital_server, 
+                "generated_by": body["employeeId"], 
+                "session_public_key": latest_visit.session_public_key, 
+                "visit_id": latest_visit.visit_id
+            }       
+            return HttpResponse(json.dumps(qr_json))
         return HttpResponseBadRequest("Patient doesn't exist")
     return HttpResponseBadRequest("Request should be a post request")
