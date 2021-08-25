@@ -31,7 +31,7 @@ def generate_qr_string(request):
             return HttpResponse(status=404)
         if patient.exists():
             try:
-                latest_visit = Visit(session_public_key = body["publicKey"], patient_id = patient.first().patient_id)
+                latest_visit = Visit(session_public_key = body["publicKey"], patient_id = patient.first())
                 latest_visit.save()
             except Visit.DoesNotExist:
                 return HttpResponse(status=404)
