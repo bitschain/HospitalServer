@@ -7,8 +7,8 @@ class mst_Patient(models.Model):
     name = models.CharField(max_length=100)
     dob = models.DateField()
     gender = models.CharField(max_length=1)
-    created = models.DateTimeField(auto_now=True)
-    updated = models.DateTimeField()
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
     is_deleted = models.BooleanField(default=False)
 
     def __str__(self):
@@ -32,7 +32,7 @@ class Visit(models.Model):
     visit_id = models.AutoField(primary_key=True)
     session_public_key = models.TextField()
     patient_id = models.ForeignKey('mst_Patient', on_delete=CASCADE)
-    created = models.DateTimeField(auto_now=True)
+    created = models.DateTimeField(auto_now_add=True)
     is_deleted = models.BooleanField(default=False)
 
 class DocumentType(models.Model):
@@ -45,7 +45,11 @@ class Report(models.Model):
     document = models.TextField()
     created_employee = models.ForeignKey('Employee', related_name='report_created_employee_id', on_delete=CASCADE)
     updated_employee = models.ForeignKey('Employee', related_name='report_updated_employee_id', on_delete=CASCADE)
-    created = models.DateTimeField(auto_now=True)
-    updated = models.DateTimeField()
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
     is_deleted = models.BooleanField(default=False)
     document_type = models.ForeignKey('DocumentType', on_delete=CASCADE)
+    # We might have multiple hash addresses in the future
+    hash_account_address = models.TextField(blank=True)
+    # -1 index represents that the index has not yet been assigned
+    hash_index = models.IntegerField(default=-1)
