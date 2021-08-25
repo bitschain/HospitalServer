@@ -2,7 +2,7 @@ from django.http.response import HttpResponse, HttpResponseBadRequest, JsonRespo
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from .models import DocumentType, Employee, Report, Visit, mst_Patient
-from umbral import encrypt
+from umbral import capsule, encrypt
 import json
 
 
@@ -86,7 +86,7 @@ def get_encrypted_document(document, visit):
     capsule, encrypted_document = encrypt(visit.session_public_key, document.encode())
     return capsule, encrypted_document
 
-
+#TODO
 @csrf_exempt
 def download_document(request):
     if request.method == 'GET':
@@ -105,4 +105,28 @@ def download_document(request):
         return HttpResponseBadRequest("No Visit exists with given VisitId")
     return HttpResponseBadRequest("Request should be a GET request")
 
-                
+@csrf_exempt
+def send_encrypted_documents_to_proxy(request):
+    if request.method == 'GET':
+        body_unicode = request.body.decode('utf-8')
+        body = json.loads(body_unicode)
+        visit = Visit.objects.filter(visit_id=body['visitId'])
+        if visit.exists():
+            report_ids = body["reportIds"]
+            encrypted_documents = []
+            capsules = []
+            for report_id in report_ids:
+                report = Report.objects.filter(report_id=report_id)
+                if report.exists():
+                    capsule, encrypted_document = get_encrypted_document(report.first().document, visit)
+                    encrypted_documents.append(encrypted_document)
+                    capsules.append(capsule)
+                else:
+                    encrypted_documents.append(None)
+                    capsules.append(None)
+            return JsonResponse({
+                'encrypted_documents': encrypted_documents,
+                'capsules': capsules
+            })
+        return HttpResponseBadRequest("No visit with this visitId exists")
+    return HttpResponseBadRequest("Request should be a get request")
