@@ -2,7 +2,9 @@ from django.http.response import HttpResponse, HttpResponseBadRequest, JsonRespo
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from .models import DocumentType, Employee, Report, Visit, mst_Patient
+from umbral import encrypt
 import json
+
 
 # Create your views here.
 
@@ -80,3 +82,27 @@ def uploadDocumentBatch(request):
         return HttpResponseBadRequest("No visit with corrosponding visitId")
     return HttpResponseBadRequest("Request should be post and not get")
 
+def get_encrypted_document(document, visit):
+    capsule, encrypted_document = encrypt(visit.session_public_key, document.encode())
+    return capsule, encrypted_document
+
+
+@csrf_exempt
+def download_document(request):
+    if request.method == 'GET':
+        body_unicode = request.body.decode('utf-8')
+        body = json.loads(body_unicode)
+        visit = Visit.objects.filter(visit_id=body["visitId"])
+        report = Report.objects.filter(report_id=body["reportId"])
+        if visit.exists():
+            if report.exists():
+                capsule, encrypted_document = get_encrypted_document(report.document, visit)
+                return JsonResponse({
+                    'encrypted_document': encrypted_document,
+                    'capsule': capsule
+                })
+            return HttpResponseBadRequest("No Report exists with given ReportId")
+        return HttpResponseBadRequest("No Visit exists with given VisitId")
+    return HttpResponseBadRequest("Request should be a GET request")
+
+                
