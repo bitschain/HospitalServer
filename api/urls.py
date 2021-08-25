@@ -4,5 +4,6 @@ import re
 from django.conf.urls import url, include
 
 urlpatterns = [
-    path('create_session', views.createNewUserSession)
+    path('create_session', views.createNewUserSession),
+    path('upload_documents', views.uploadDocumentBatch)
 ]
