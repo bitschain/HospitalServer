@@ -1,3 +1,4 @@
+from django.http import response
 from django.http.response import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
@@ -106,27 +107,19 @@ def download_document(request):
     return HttpResponseBadRequest("Request should be a GET request")
 
 @csrf_exempt
-def send_encrypted_documents_to_proxy(request):
+def get_documents(request, visit_id, report_ids):
     if request.method == 'GET':
-        body_unicode = request.body.decode('utf-8')
-        body = json.loads(body_unicode)
-        visit = Visit.objects.filter(visit_id=body['visitId'])
+        visit = Visit.objects.filter(visit_id)
         if visit.exists():
-            report_ids = body["reportIds"]
-            encrypted_documents = []
-            capsules = []
+            response = []
             for report_id in report_ids:
                 report = Report.objects.filter(report_id=report_id)
                 if report.exists():
                     capsule, encrypted_document = get_encrypted_document(report.first().document, visit)
-                    encrypted_documents.append(encrypted_document)
-                    capsules.append(capsule)
+                    json_response_element = json.dumps({'report_id': report_id, 'encrypted_document': encrypted_document, 'capsule': capsule})
+                    response.append(json_response_element)
                 else:
-                    encrypted_documents.append(None)
-                    capsules.append(None)
-            return JsonResponse({
-                'encrypted_documents': encrypted_documents,
-                'capsules': capsules
-            })
+                    response.append(json.dumps({'report_id': report_id, 'encrypted_document': '', 'capsule': ''}))
+            return JsonResponse({'result': response})
         return HttpResponseBadRequest("No visit with this visitId exists")
     return HttpResponseBadRequest("Request should be a get request")
