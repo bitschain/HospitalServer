@@ -84,7 +84,7 @@ def uploadDocumentBatch(request):
     return HttpResponseBadRequest("Request should be post and not get")
 
 def get_encrypted_document(document, visit):
-    capsule, encrypted_document = encrypt(visit.session_public_key, document.encode())
+    capsule, encrypted_document = encrypt(visit.first().session_public_key, document.encode())
     return capsule, encrypted_document
 
 #TODO
@@ -107,9 +107,11 @@ def download_document(request):
     return HttpResponseBadRequest("Request should be a GET request")
 
 @csrf_exempt
-def get_documents(request, visit_id, report_ids):
+def get_documents(request):
     if request.method == 'GET':
-        visit = Visit.objects.filter(visit_id)
+        visit_id = request.GET.get('visit_id', -1)
+        report_ids = request.GET.get('report_ids', [])
+        visit = Visit.objects.filter(visit_id=visit_id)
         if visit.exists():
             response = []
             for report_id in report_ids:
