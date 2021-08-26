@@ -3,7 +3,7 @@ from django.http.response import HttpResponse, HttpResponseBadRequest, JsonRespo
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from .models import DocumentType, Employee, Report, Visit, mst_Patient
-from umbral import capsule, encrypt
+from umbral import capsule, encrypt, PublicKey
 import json
 
 
@@ -84,7 +84,8 @@ def uploadDocumentBatch(request):
     return HttpResponseBadRequest("Request should be post and not get")
 
 def get_encrypted_document(document, visit):
-    capsule, encrypted_document = encrypt(visit.first().session_public_key, document.encode())
+    pk = PublicKey._from_exact_bytes(data=b'\x03\xc0&?%\xad\xbf\xbd\xc2\x06\xc4\xd6\xa5\xed[7O\xc5&JMq\xed\x91<\xc2\xd4\xc9\xc3a\x19\x83\n')
+    capsule, encrypted_document = encrypt(pk, document.encode())
     return capsule, encrypted_document
 
 #TODO
@@ -118,7 +119,7 @@ def get_documents(request):
                 report = Report.objects.filter(report_id=report_id)
                 if report.exists():
                     capsule, encrypted_document = get_encrypted_document(report.first().document, visit)
-                    json_response_element = json.dumps({'report_id': report_id, 'encrypted_document': encrypted_document, 'capsule': capsule})
+                    json_response_element = json.dumps({'report_id': report_id, 'encrypted_document': str(encrypted_document, encoding='utf-8'), 'capsule': capsule})
                     response.append(json_response_element)
                 else:
                     response.append(json.dumps({'report_id': report_id, 'encrypted_document': '', 'capsule': ''}))
