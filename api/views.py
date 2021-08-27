@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import DocumentType, Employee, Report, Visit, mst_Patient
 from umbral import capsule, encrypt, PublicKey
 import json
+import base64
 
 
 # Create your views here.
@@ -119,7 +120,7 @@ def get_documents(request):
                 report = Report.objects.filter(report_id=report_id)
                 if report.exists():
                     capsule, encrypted_document = get_encrypted_document(report.first().document, visit)
-                    json_response_element = json.dumps({'report_id': report_id, 'encrypted_document': str(encrypted_document, encoding='utf-8'), 'capsule': capsule})
+                    json_response_element = json.dumps({'report_id': report_id, 'encrypted_document': base64.b64encode(encrypted_document).decode('utf-8'), 'capsule': base64.b64encode(bytes(capsule)).decode('utf-8')})
                     response.append(json_response_element)
                 else:
                     response.append(json.dumps({'report_id': report_id, 'encrypted_document': '', 'capsule': ''}))
