@@ -124,10 +124,10 @@ def get_documents(request):
                 report_dict = {}
                 report = Report.objects.filter(report_id=report_id)
                 visit = report.first().visit_id
-                print(visit.visit_id)
-                if Visit.objects.filter(visit_id=visit.visit_id).exists():
+                visit = Visit.objects.filter(visit_id=visit.visit_id)
+                if visit.exists():
                     if report.exists():
-                        capsule, encrypted_document = get_encrypted_document(report.first().document, visit)
+                        capsule, encrypted_document = get_encrypted_document(report.first().document, visit.first())
                         report_dict['report_id'] = report_id
                         report_dict['encrypted_document'] = base64.b64encode(encrypted_document).decode('utf-8')
                         report_dict['capsule'] = base64.b64encode(bytes(capsule)).decode('utf-8')
@@ -136,7 +136,8 @@ def get_documents(request):
                         report_dict['encrypted_document'] = ''
                         report_dict['capsule'] = ''
                     response.append(report_dict)
-                return HttpResponseBadRequest("No visit with this visitId exists")
+                else :
+                    return HttpResponseBadRequest("No visit with this visitId exists")
             return JsonResponse({'result': response})
         return HttpResponseBadRequest("No visit with this visitId exists")
     return HttpResponseBadRequest("Request should be a get request")
