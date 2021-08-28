@@ -46,9 +46,10 @@ def generate_qr_string(request):
                 "hospital_server": hospital_server, 
                 "generated_by": body["employeeId"], 
                 "session_public_key": latest_visit.session_public_key, 
-                "visit_id": latest_visit.visit_id
+                "visit_id": latest_visit.visit_id,
+                "qr_string": str(latest_visit.visit_id) + str(body["employeeId"]) + latest_visit.session_public_key
             }       
-            return HttpResponse(json.dumps(qr_json))
+            return JsonResponse(qr_json)
         return HttpResponseBadRequest("Patient doesn't exist")
     return HttpResponseBadRequest("Request should be a post request")
 
@@ -119,13 +120,18 @@ def get_documents(request):
         if visit.exists():
             response = []
             for report_id in report_ids:
+                report_dict = {}
                 report = Report.objects.filter(report_id=report_id)
                 if report.exists():
                     capsule, encrypted_document = get_encrypted_document(report.first().document, visit.first())
-                    json_response_element = json.dumps({'report_id': report_id, 'encrypted_document': base64.b64encode(encrypted_document).decode('utf-8'), 'capsule': base64.b64encode(bytes(capsule)).decode('utf-8')})
-                    response.append(json_response_element)
+                    report_dict['report_id'] = report_id
+                    report_dict['encrypted_document'] = base64.b64encode(encrypted_document).decode('utf-8')
+                    report_dict['capsule'] = base64.b64encode(bytes(capsule)).decode('utf-8')
                 else:
-                    response.append(json.dumps({'report_id': report_id, 'encrypted_document': '', 'capsule': ''}))
+                    report_dict['report_id'] = report_id
+                    report_dict['encrypted_document'] = ''
+                    report_dict['capsule'] = ''
+                response.append(report_dict)
             return JsonResponse({'result': response})
         return HttpResponseBadRequest("No visit with this visitId exists")
     return HttpResponseBadRequest("Request should be a get request")
