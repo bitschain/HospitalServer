@@ -20,7 +20,7 @@ def createNewUserSession(request):
         if patient.exists():
             visit = Visit(session_public_key = body["publicKey"], patient_id = patient.first())
             visit.save()
-            return HttpResponse("Session Created")
+            return JsonResponse({"visit_id": visit.visit_id})
         return HttpResponseBadRequest("Patient doesn't exist")
     return HttpResponseBadRequest("Request should be a post request")
 
