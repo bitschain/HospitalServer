@@ -85,7 +85,9 @@ def uploadDocumentBatch(request):
     return HttpResponseBadRequest("Request should be post and not get")
 
 def get_encrypted_document(document, visit):
-    pk = PublicKey._from_exact_bytes(data=b'\x03\xc0&?%\xad\xbf\xbd\xc2\x06\xc4\xd6\xa5\xed[7O\xc5&JMq\xed\x91<\xc2\xd4\xc9\xc3a\x19\x83\n')
+    serialized_pub_key = visit.session_public_key
+    pub_key_bytes = base64.b64decode(serialized_pub_key.encode('utf-8'))
+    pk = PublicKey._from_exact_bytes(data=pub_key_bytes)
     capsule, encrypted_document = encrypt(pk, document.encode())
     return capsule, encrypted_document
 
@@ -99,7 +101,7 @@ def download_document(request):
         report = Report.objects.filter(report_id=body["reportId"])
         if visit.exists():
             if report.exists():
-                capsule, encrypted_document = get_encrypted_document(report.document, visit)
+                capsule, encrypted_document = get_encrypted_document(report.first().document, visit.first())
                 return JsonResponse({
                     'encrypted_document': encrypted_document,
                     'capsule': capsule
@@ -119,7 +121,7 @@ def get_documents(request):
             for report_id in report_ids:
                 report = Report.objects.filter(report_id=report_id)
                 if report.exists():
-                    capsule, encrypted_document = get_encrypted_document(report.first().document, visit)
+                    capsule, encrypted_document = get_encrypted_document(report.first().document, visit.first())
                     json_response_element = json.dumps({'report_id': report_id, 'encrypted_document': base64.b64encode(encrypted_document).decode('utf-8'), 'capsule': base64.b64encode(bytes(capsule)).decode('utf-8')})
                     response.append(json_response_element)
                 else:
