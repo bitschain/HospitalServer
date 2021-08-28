@@ -115,7 +115,7 @@ def download_document(request):
 def get_documents(request):
     if request.method == 'GET':
         visit_id = request.GET.get('visit_id', -1)
-        report_ids = request.GET.get('report_ids', [])
+        report_ids = request.GET.getlist('report_ids')
         visit = Visit.objects.filter(visit_id=visit_id)
         if visit.exists():
             response = []
