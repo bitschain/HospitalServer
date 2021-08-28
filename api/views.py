@@ -3,13 +3,12 @@ from django.http.response import HttpResponse, HttpResponseBadRequest, JsonRespo
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from .models import DocumentType, Employee, Report, Visit, mst_Patient
-from umbral import capsule, encrypt, PublicKey
+from umbral import encrypt, PublicKey
 import json
 import base64
-
+from django.conf import settings
 
 # Create your views here.
-
         
 @csrf_exempt
 def createNewUserSession(request):
@@ -135,3 +134,23 @@ def get_documents(request):
             return JsonResponse({'result': response})
         return HttpResponseBadRequest("No visit with this visitId exists")
     return HttpResponseBadRequest("Request should be a get request")
+
+@csrf_exempt
+def add_documents(request):
+    if request.method == 'POST':
+        body_unicode = request.body.decode('utf-8')
+        body = json.loads(body_unicode)
+        visitId = body['visit_id']
+        visitQuerySet = Visit.objects.filter(visit_id=visitId)
+        if visitQuerySet.exists():
+            visit = visitQuerySet.first()
+            status = []
+            listOfDocuments = body['documents']
+            for document in listOfDocuments:
+                encryptedDocument = document['re_encrypted_document']
+                accountAddress = document['address']
+                # Decrypt the document using own private key
+                # Hash each of the documents 
+            return JsonResponse({'status': status})
+        return HttpResponseBadRequest('Specified VisitId does not exist')
+    return HttpResponseBadRequest('Must be a POST request')

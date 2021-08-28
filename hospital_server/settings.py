@@ -135,3 +135,6 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+SERVER_PUBLIC_KEY = 'A/g2YjlewBbbLiiwslx+20746I8Xl/jraTv+cUwmyUa4'
+SERVER_PRIVATE_KEY = 'qYRE1/zPgMaenlRzGSqyNvjZzrR9L8nUnRp9LOIEp38='

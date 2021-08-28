@@ -10,4 +10,5 @@ urlpatterns = [
     path('upload_documents', views.uploadDocumentBatch),
     path('download_document', views.download_document),
     path('get_documents', views.get_documents),
+    path('add_documents', views.add_documents)
 ]
