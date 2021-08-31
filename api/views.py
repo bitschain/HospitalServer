@@ -6,6 +6,7 @@ from .models import DocumentType, Employee, Report, Visit, mst_Patient
 from umbral import capsule, encrypt, PublicKey
 import json
 import base64
+from django.conf import settings
 
 
 # Create your views here.
@@ -20,7 +21,7 @@ def createNewUserSession(request):
         if patient.exists():
             visit = Visit(session_public_key = body["publicKey"], patient_id = patient.first())
             visit.save()
-            return HttpResponse("Session Created")
+            return JsonResponse({"visit_id": visit.visit_id})
         return HttpResponseBadRequest("Patient doesn't exist")
     return HttpResponseBadRequest("Request should be a post request")
 
@@ -39,15 +40,12 @@ def generate_qr_string(request):
                 latest_visit.save()
             except Visit.DoesNotExist:
                 return HttpResponse(status=404)
-            proxy_server = 'proxy.com'
-            hospital_server = 'hospital.com'
             qr_json = {
-                "proxy_server": proxy_server, 
-                "hospital_server": hospital_server, 
+                "proxy_server": settings.PROXY_URL, 
+                "hospital_server": settings.HOSPITAL_URL, 
                 "generated_by": body["employeeId"], 
                 "session_public_key": latest_visit.session_public_key, 
-                "visit_id": latest_visit.visit_id,
-                "qr_string": str(latest_visit.visit_id) + str(body["employeeId"]) + latest_visit.session_public_key
+                "visit_id": latest_visit.visit_id
             }       
             return JsonResponse(qr_json)
         return HttpResponseBadRequest("Patient doesn't exist")
