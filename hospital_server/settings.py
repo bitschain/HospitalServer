@@ -132,7 +132,8 @@ USE_TZ = True
 STATIC_URL = '/static/'
 HOSPITAL_URL = '127.0.0.1:8000'
 PROXY_URL = '127.0.0.1:8000'
-
+HOSPITAL_PRIVATE_KEY = "5FQXE4UyYRLoPHGkpGn0l6s0me88IGHfScrVTVxmJQA="
+HOSPITAL_PUBLIC_KEY = "A/cU5GGQ3AsTYmPLQuTOBPgHGX6uVZ9aVv1slA1b6UlV"
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 

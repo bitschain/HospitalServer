@@ -1,9 +1,10 @@
+from hospital_server.settings import HOSPITAL_PRIVATE_KEY
 from django.http import response
 from django.http.response import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from .models import DocumentType, Employee, Report, Visit, mst_Patient
-from umbral import capsule, encrypt, PublicKey
+from umbral import capsule, encrypt, PublicKey, decrypt_reencrypted, pre
 import json
 import base64
 from django.conf import settings
@@ -139,3 +140,33 @@ def get_documents(request):
             return JsonResponse({'result': response})
         return HttpResponseBadRequest("No visit with this visitId exists")
     return HttpResponseBadRequest("Request should be a get request")
+
+
+@csrf_exempt
+def add_documents(request):
+    if request.method == 'POST':
+        body_unicode = request.body.decode('utf-8')
+        body = json.loads(body_unicode)
+        visitId = body['visit_id']
+        visitQuerySet = Visit.objects.filter(visit_id=visitId)
+        if visitQuerySet.exists():
+            visit = visitQuerySet.first()
+            status = []
+            listOfDocuments = body['documents']
+            for document in listOfDocuments:
+                encryptedDocument = document['ciphertext']
+                capsule = document['capsule']
+                accountAddress = document['address']
+                patient_public_key = document['patient_session_public_key']
+                cfrag = document['cfrag']
+                decrypted_document = pre.decrypt_reencrypted(HOSPITAL_PRIVATE_KEY, patient_public_key, capsule, cfrag, encryptedDocument)
+                if(hash(decrypted_document) == smart_contract_placeholder()):
+                    visit = Visit.objects.filter(visit_id=visitId).first()
+                    report = Report(visit_id=visit, document=decrypted_document, created_employee=None, document_type=None, hash_account_address=accountAddress)
+                    report.save()
+                    status.append({"report_id": document["report_id"], "status": 'Matched'})
+                else:
+                    status.append({"report_id": document["report_id"], "status": 'Did not match'})
+            return JsonResponse({'status': status})
+        return HttpResponseBadRequest('Specified VisitId does not exist')
+    return HttpResponseBadRequest('Must be a POST request')
