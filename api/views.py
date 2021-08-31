@@ -161,7 +161,6 @@ def add_documents(request):
                 cfrag = document['cfrag']
                 decrypted_document = pre.decrypt_reencrypted(HOSPITAL_PRIVATE_KEY, patient_public_key, capsule, cfrag, encryptedDocument)
                 if(hash(decrypted_document) == smart_contract_placeholder()):
-                    visit = Visit.objects.filter(visit_id=visitId).first()
                     report = Report(visit_id=visit, document=decrypted_document, created_employee=None, document_type=None, hash_account_address=accountAddress)
                     report.save()
                     status.append({"report_id": document["report_id"], "status": 'Matched'})
