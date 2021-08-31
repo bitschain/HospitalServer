@@ -158,8 +158,9 @@ def add_documents(request):
                 capsule = document['capsule']
                 accountAddress = document['address']
                 patient_public_key = document['patient_session_public_key']
-                cfrag = document['cfrag']
-                decrypted_document = pre.decrypt_reencrypted(HOSPITAL_PRIVATE_KEY, patient_public_key, capsule, cfrag, encryptedDocument)
+                cfrag = base64.b64decode(document['cfrag'])
+                cfrags = [cfrag]
+                decrypted_document = pre.decrypt_reencrypted(HOSPITAL_PRIVATE_KEY, patient_public_key, capsule, cfrags, encryptedDocument)
                 if(hash(decrypted_document) == smart_contract_placeholder()):
                     report = Report(visit_id=visit, document=decrypted_document, created_employee=None, document_type=None, hash_account_address=accountAddress)
                     report.save()
