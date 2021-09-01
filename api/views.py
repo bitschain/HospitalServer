@@ -114,10 +114,10 @@ def download_document(request):
 @csrf_exempt
 def get_documents(request):
     if request.method == 'GET':
-        visit_id = request.GET.get('visit_id', -1)
+        visit_id_global = request.GET.get('visit_id', -1)
         report_ids = request.GET.getlist('report_ids')
-        visit = Visit.objects.filter(visit_id=visit_id)
-        if visit.exists():
+        visit_global = Visit.objects.filter(visit_id=visit_id_global)
+        if visit_global.exists():
             response = []
             for report_id in report_ids:
                 report_dict = {}
@@ -137,7 +137,7 @@ def get_documents(request):
                     response.append(report_dict)
                 else :
                     return HttpResponseBadRequest("No visit with this visitId exists")
-            return JsonResponse({'result': response})
+            return JsonResponse({'result': response, 'visit_id': visit_id_global})
         return HttpResponseBadRequest("No visit with this visitId exists")
     return HttpResponseBadRequest("Request should be a get request")
 
