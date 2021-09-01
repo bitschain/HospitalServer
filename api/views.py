@@ -206,7 +206,7 @@ def add_documents(request):
                 if hashlib.sha256(decrypted_document).hexdigest() == get_hashed_document(SMART_CONTRACT_ENDPOINT, report_id, hospital_id):
                 # if True:
                     report = Report(visit_id=visit, document=decrypted_document, created_employee=visit.employee_id, updated_employee=visit.employee_id, document_type=1
-                                     , hash_account_address="SampleAccountAddress", hash_index=3
+                                    #  , hash_account_address="SampleAccountAddress", hash_index=3
                                     )
                 # TODO will need to change document type to metadata passed by the patient, need to remove the hash fields from model and everywhere
                     report.save()
