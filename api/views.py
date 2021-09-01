@@ -114,31 +114,27 @@ def download_document(request):
 @csrf_exempt
 def get_documents(request):
     if request.method == 'GET':
-        visit_id = request.GET.get('visit_id', -1)
         report_ids = request.GET.getlist('report_ids')
-        visit = Visit.objects.filter(visit_id=visit_id)
-        if visit.exists():
-            response = []
-            for report_id in report_ids:
-                report_dict = {}
-                report = Report.objects.filter(report_id=report_id)
-                visit = report.first().visit_id
-                visit = Visit.objects.filter(visit_id=visit.visit_id)
-                if visit.exists():
-                    if report.exists():
-                        capsule, encrypted_document = get_encrypted_document(report.first().document, visit.first())
-                        report_dict['report_id'] = report_id
-                        report_dict['encrypted_document'] = base64.b64encode(encrypted_document).decode('utf-8')
-                        report_dict['capsule'] = base64.b64encode(bytes(capsule)).decode('utf-8')
-                    else:
-                        report_dict['report_id'] = report_id
-                        report_dict['encrypted_document'] = ''
-                        report_dict['capsule'] = ''
-                    response.append(report_dict)
-                else :
-                    return HttpResponseBadRequest("No visit with this visitId exists")
-            return JsonResponse({'result': response})
-        return HttpResponseBadRequest("No visit with this visitId exists")
+        response = []
+        for report_id in report_ids:
+            report_dict = {}
+            report = Report.objects.filter(report_id=report_id)
+            visit = report.first().visit_id
+            visit = Visit.objects.filter(visit_id=visit.visit_id)
+            if visit.exists():
+                if report.exists():
+                    capsule, encrypted_document = get_encrypted_document(report.first().document, visit.first())
+                    report_dict['report_id'] = report_id
+                    report_dict['encrypted_document'] = base64.b64encode(encrypted_document).decode('utf-8')
+                    report_dict['capsule'] = base64.b64encode(bytes(capsule)).decode('utf-8')
+                else:
+                    report_dict['report_id'] = report_id
+                    report_dict['encrypted_document'] = ''
+                    report_dict['capsule'] = ''
+                response.append(report_dict)
+            else :
+                return HttpResponseBadRequest("No visit with this visitId exists")
+        return JsonResponse({'result': response})
     return HttpResponseBadRequest("Request should be a get request")
 
 
