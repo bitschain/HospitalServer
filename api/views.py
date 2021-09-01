@@ -195,7 +195,7 @@ def add_documents(request):
                 cfrag = cfrag.verify(capsule = new_capsule,
                         verifying_pk=patient_session_verifying_key,
                                          delegating_pk=patient_session_public_key,
-                                         receiving_pk=HOSPITAL_PUBLIC_KEY
+                                         receiving_pk=public_key_from_utf8(HOSPITAL_PUBLIC_KEY)
                                      # receiving_pk=hospital_b_public_key
                                      )
 
@@ -205,9 +205,10 @@ def add_documents(request):
                 # decrypted_document = decrypt_reencrypted(secret_key_from_utf8(hospital_b_secret_key_utf8), patient_session_public_key, new_capsule, cfrags, encryptedDocument)
                 if hashlib.sha256(decrypted_document).hexdigest() == get_hashed_document(SMART_CONTRACT_ENDPOINT, report_id, hospital_id):
                 # if True:
-                    report = Report(visit_id=visit, document=decrypted_document, created_employee=None, document_type=None
-                                    # , hash_account_address=accountAddress
+                    report = Report(visit_id=visit, document=decrypted_document, created_employee=visit.employee_id, updated_employee=visit.employee_id, document_type=1
+                                     , hash_account_address="SampleAccountAddress", hash_index=3
                                     )
+                # TODO will need to change document type to metadata passed by the patient, need to remove the hash fields from model and everywhere
                     report.save()
                     status.append({"report_id": document["report_id"], "status": 'Matched'})
                 else:
