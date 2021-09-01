@@ -64,7 +64,7 @@ def post_hashed_document(document, report, hospital_id, sc_endpoint):
 def uploadDocument(document, visit, employee):
     # try:
     documentType = DocumentType.objects.filter(document_id=document['documentType']).first()
-    report = Report(visit_id=visit, document=document['document'], created_employee=employee, updated_employee=employee, document_type=documentType)
+    report = Report(visit_id=visit, document=document['document'].encode(), created_employee=employee, updated_employee=employee, document_type=documentType)
     report.save()
     return post_hashed_document(document, report, HOSPITAL_ID, SMART_CONTRACT_ENDPOINT)
     # except:
@@ -96,7 +96,7 @@ def get_encrypted_document(document, visit):
     serialized_pub_key = visit.session_public_key
     pub_key_bytes = base64.b64decode(serialized_pub_key.encode('utf-8'))
     pk = PublicKey._from_exact_bytes(data=pub_key_bytes)
-    capsule, encrypted_document = encrypt(pk, document.encode())
+    capsule, encrypted_document = encrypt(pk, document)
     return capsule, encrypted_document
 
 #TODO
@@ -209,7 +209,7 @@ def add_documents(request):
                 # if True:
                     document_type = DocumentType(name="dummy")
                     document_type.save()
-                    report = Report(visit_id=visit, document=decrypted_document, created_employee=visit.employee, updated_employee=visit.employee, document_type=document_type
+                    report = Report(visit_id=visit, document=decrypted_document.encode(), created_employee=visit.employee, updated_employee=visit.employee, document_type=document_type
                                     #  , hash_account_address="SampleAccountAddress", hash_index=3
                                     )
                 # TODO will need to change document type to metadata passed by the patient, need to remove the hash fields from model and everywhere

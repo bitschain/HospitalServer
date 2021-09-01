@@ -43,7 +43,7 @@ class DocumentType(models.Model):
 class Report(models.Model):
     report_id = models.AutoField(primary_key=True)
     visit_id = models.ForeignKey('Visit', on_delete=CASCADE)
-    document = models.TextField()
+    document = models.BinaryField()
     created_employee = models.ForeignKey('Employee', related_name='report_created_employee_id', on_delete=CASCADE)
     updated_employee = models.ForeignKey('Employee', related_name='report_updated_employee_id', on_delete=CASCADE)
     created = models.DateTimeField(auto_now_add=True)
