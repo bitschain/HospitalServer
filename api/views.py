@@ -1,15 +1,16 @@
-from hospital_server.settings import HOSPITAL_PRIVATE_KEY
+from hospital_server.settings import HOSPITAL_PRIVATE_KEY, HOSPITAL_PUBLIC_KEY
 from django.http import response
 from django.http.response import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from .models import DocumentType, Employee, Report, Visit, mst_Patient
-from umbral import capsule, encrypt, PublicKey, decrypt_reencrypted, pre
+from umbral import Capsule, encrypt, PublicKey, decrypt_reencrypted, CapsuleFrag, SecretKey
 import json
 import base64
 from django.conf import settings
 
-
+# hospital_b_public_key_utf8="A8oaMaPq0YNLGUJ3n3i3KCbrIyFiCNwdkH872O31mRXE"
+# hospital_b_secret_key_utf8="lal4unkPcwkHLl0Epgr35YYBBQVgCr8Ql8Wn2Pba7hs="
 # Create your views here.
 
         
@@ -137,6 +138,12 @@ def get_documents(request):
         return JsonResponse({'result': response})
     return HttpResponseBadRequest("Request should be a get request")
 
+def public_key_from_utf8(utf8_string: str) -> 'PublicKey':
+    return PublicKey.from_bytes(base64.b64decode(utf8_string.encode('utf-8')))
+
+def secret_key_from_utf8(utf8_string: str) -> 'SecretKey':
+    return SecretKey.from_bytes(base64.b64decode(utf8_string.encode('utf-8')))
+
 
 @csrf_exempt
 def add_documents(request):
@@ -150,16 +157,36 @@ def add_documents(request):
             status = []
             listOfDocuments = body['reports']
             for document in listOfDocuments:
-                encryptedDocument = document['ciphertext']
-                capsule = document['capsule']
+                encryptedDocument = base64.b64decode(document['ciphertext'].encode('utf-8'))
+
+                capsule_bytes = base64.b64decode(document['capsule'].encode('utf-8'))
+                new_capsule = Capsule.from_bytes(capsule_bytes)
+
                 hospital_report_unique_key=document['hospital_report_unique_key']
                 # accountAddress = document['address']
-                patient_public_key = document['patient_session_public_key']
-                cfrag = base64.b64decode(document['cfrag'])
+                patient_session_public_key = public_key_from_utf8(document['patient_session_public_key'])
+                patient_session_verifying_key = public_key_from_utf8(document['patient_session_verifying_key'])
+                # hospital_b_public_key = public_key_from_utf8(hospital_b_public_key_utf8)
+
+                cfrag_bytes = base64.b64decode(document['cfrag'].encode('utf-8'))
+
+                cfrag = CapsuleFrag.from_bytes(cfrag_bytes)
+                cfrag = cfrag.verify(capsule = new_capsule,
+                        verifying_pk=patient_session_verifying_key,
+                                         delegating_pk=patient_session_public_key,
+                                         receiving_pk=HOSPITAL_PUBLIC_KEY
+                                     # receiving_pk=hospital_b_public_key
+                                     )
+
+
                 cfrags = [cfrag]
-                decrypted_document = pre.decrypt_reencrypted(HOSPITAL_PRIVATE_KEY, patient_public_key, capsule, cfrags, encryptedDocument)
+                decrypted_document = decrypt_reencrypted(secret_key_from_utf8(HOSPITAL_PRIVATE_KEY), patient_session_public_key, new_capsule, cfrags, encryptedDocument)
+                # decrypted_document = decrypt_reencrypted(secret_key_from_utf8(hospital_b_secret_key_utf8), patient_session_public_key, new_capsule, cfrags, encryptedDocument)
                 if(hash(decrypted_document) == smart_contract_placeholder()):
-                    report = Report(visit_id=visit, document=decrypted_document, created_employee=None, document_type=None, hash_account_address=accountAddress)
+                # if True:
+                    report = Report(visit_id=visit, document=decrypted_document, created_employee=None, document_type=None
+                                    # , hash_account_address=accountAddress
+                                    )
                     report.save()
                     status.append({"report_id": document["report_id"], "status": 'Matched'})
                 else:
