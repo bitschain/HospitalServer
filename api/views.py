@@ -1,13 +1,12 @@
-from hospital_server.settings import HOSPITAL_PRIVATE_KEY, HOSPITAL_PUBLIC_KEY
+from hospital_server.settings import HOSPITAL_ID, HOSPITAL_PRIVATE_KEY, HOSPITAL_PUBLIC_KEY, SMART_CONTRACT_ENDPOINT
 from django.http import response
 from django.http.response import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from .models import DocumentType, Employee, Report, Visit, mst_Patient
 from umbral import Capsule, encrypt, PublicKey, decrypt_reencrypted, CapsuleFrag, SecretKey
-import json
-import base64
 from django.conf import settings
+import json, base64, hashlib, requests
 
 # hospital_b_public_key_utf8="A8oaMaPq0YNLGUJ3n3i3KCbrIyFiCNwdkH872O31mRXE"
 # hospital_b_secret_key_utf8="lal4unkPcwkHLl0Epgr35YYBBQVgCr8Ql8Wn2Pba7hs="
@@ -53,13 +52,21 @@ def generate_qr_string(request):
         return HttpResponseBadRequest("Patient doesn't exist")
     return HttpResponseBadRequest("Request should be a post request")
 
+
+def post_hashed_document(document, report, hospital_id, sc_endpoint):
+    payload = {'report_id': report.report_id, 'hospital_id': hospital_id, 'hashed_document': hashlib.sha256(document['document']).hexdigest()}
+    response = requests.post(sc_endpoint, params=payload)
+    if response.status_code == 200:
+        return report.report_id
+    elif response.status_code == 404:
+        return response
     
 def uploadDocument(document, visit, employee):
     # try:
     documentType = DocumentType.objects.filter(document_id=document['documentType']).first()
     report = Report(visit_id=visit, document=document['document'], created_employee=employee, updated_employee=employee, document_type=documentType)
     report.save()
-    return report.report_id
+    return post_hashed_document(document, report, HOSPITAL_ID, SMART_CONTRACT_ENDPOINT)
     # except:
       #  return -1
 
@@ -145,6 +152,17 @@ def secret_key_from_utf8(utf8_string: str) -> 'SecretKey':
     return SecretKey.from_bytes(base64.b64decode(utf8_string.encode('utf-8')))
 
 
+def get_hashed_document(sc_endpoint, report_id, hospital_id):
+    payload = {'report_id': report_id, 'hospital_id': hospital_id}
+    response = requests.post(sc_endpoint, params=payload)
+    if response.status_code == 200:
+        body = response.json()
+        hashed_document = body['result']
+        return hashed_document
+    elif response.status_code == 404:
+        return response
+
+
 @csrf_exempt
 def add_documents(request):
     if request.method == 'POST':
@@ -163,6 +181,9 @@ def add_documents(request):
                 new_capsule = Capsule.from_bytes(capsule_bytes)
 
                 hospital_report_unique_key=document['hospital_report_unique_key']
+                key_list = hospital_report_unique_key.split("_")
+                hospital_id = key_list[0]
+                report_id = key_list[1]
                 # accountAddress = document['address']
                 patient_session_public_key = public_key_from_utf8(document['patient_session_public_key'])
                 patient_session_verifying_key = public_key_from_utf8(document['patient_session_verifying_key'])
@@ -182,7 +203,7 @@ def add_documents(request):
                 cfrags = [cfrag]
                 decrypted_document = decrypt_reencrypted(secret_key_from_utf8(HOSPITAL_PRIVATE_KEY), patient_session_public_key, new_capsule, cfrags, encryptedDocument)
                 # decrypted_document = decrypt_reencrypted(secret_key_from_utf8(hospital_b_secret_key_utf8), patient_session_public_key, new_capsule, cfrags, encryptedDocument)
-                if(hash(decrypted_document) == smart_contract_placeholder()):
+                if hashlib.sha256(decrypted_document).hexdigest() == get_hashed_document(SMART_CONTRACT_ENDPOINT, report_id, hospital_id):
                 # if True:
                     report = Report(visit_id=visit, document=decrypted_document, created_employee=None, document_type=None
                                     # , hash_account_address=accountAddress
