@@ -143,16 +143,17 @@ def add_documents(request):
     if request.method == 'POST':
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)
-        visitId = body['visit_id']
+        visitId = body['hospital_to_visit_id']
         visitQuerySet = Visit.objects.filter(visit_id=visitId)
         if visitQuerySet.exists():
             visit = visitQuerySet.first()
             status = []
-            listOfDocuments = body['documents']
+            listOfDocuments = body['reports']
             for document in listOfDocuments:
                 encryptedDocument = document['ciphertext']
                 capsule = document['capsule']
-                accountAddress = document['address']
+                hospital_report_unique_key=document['hospital_report_unique_key']
+                # accountAddress = document['address']
                 patient_public_key = document['patient_session_public_key']
                 cfrag = base64.b64decode(document['cfrag'])
                 cfrags = [cfrag]
