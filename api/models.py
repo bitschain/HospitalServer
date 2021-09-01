@@ -34,6 +34,7 @@ class Visit(models.Model):
     patient_id = models.ForeignKey('mst_Patient', on_delete=CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     is_deleted = models.BooleanField(default=False)
+    employee = models.ForeignKey('Employee', on_delete=CASCADE)
 
 class DocumentType(models.Model):
     document_id = models.AutoField(primary_key=True)
@@ -49,7 +50,7 @@ class Report(models.Model):
     updated = models.DateTimeField(auto_now=True)
     is_deleted = models.BooleanField(default=False)
     document_type = models.ForeignKey('DocumentType', on_delete=CASCADE)
-    # We might have multiple hash addresses in the future
-    hash_account_address = models.TextField(blank=True)
-    # -1 index represents that the index has not yet been assigned
-    hash_index = models.IntegerField(default=-1)
+    # # We might have multiple hash addresses in the future
+    # hash_account_address = models.TextField(blank=True)
+    # # -1 index represents that the index has not yet been assigned
+    # hash_index = models.IntegerField(default=-1)
