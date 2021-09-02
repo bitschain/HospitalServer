@@ -167,7 +167,7 @@ def get_hashed_document(sc_endpoint, report_id, hospital_id):
     response = requests.post(sc_endpoint+'/getDocumentHash', data=payload)
     if response.status_code == 200:
         body = response.json()
-        hashed_document = body['result']
+        hashed_document = body['documentHash']
         return hashed_document
     elif response.status_code == 404:
         return response
