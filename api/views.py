@@ -54,7 +54,7 @@ def generate_qr_string(request):
 
 
 def post_hashed_document(document, report, hospital_id, sc_endpoint):
-    payload = {'report_id': report.report_id, 'hospital_id': hospital_id, 'hashed_document': hashlib.sha256(document['document'].decode('utf-8')).hexdigest()}
+    payload = {'report_id': report.report_id, 'hospital_id': hospital_id, 'hashed_document': hashlib.sha256(document['document']).hexdigest()}
     response = requests.post(sc_endpoint+'/addHashToBlockchain', params=payload)
     if response.status_code == 200:
         return report.report_id
