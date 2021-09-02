@@ -55,7 +55,7 @@ def generate_qr_string(request):
 
 def post_hashed_document(document, report, hospital_id, sc_endpoint):
     payload = {'report_id': report.report_id, 'hospital_id': hospital_id, 'hashed_document': hashlib.sha256(document['document']).hexdigest()}
-    response = requests.post(sc_endpoint, params=payload)
+    response = requests.post(sc_endpoint+'/addHashToBlockchain', params=payload)
     if response.status_code == 200:
         return report.report_id
     elif response.status_code == 404:
@@ -154,7 +154,7 @@ def secret_key_from_utf8(utf8_string: str) -> 'SecretKey':
 
 def get_hashed_document(sc_endpoint, report_id, hospital_id):
     payload = {'report_id': report_id, 'hospital_id': hospital_id}
-    response = requests.post(sc_endpoint, params=payload)
+    response = requests.post(sc_endpoint+'/getDocumentHash', params=payload)
     if response.status_code == 200:
         body = response.json()
         hashed_document = body['result']
