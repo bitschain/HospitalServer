@@ -18,12 +18,15 @@ def createNewUserSession(request):
     if request.method == 'POST':
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)
-        patient = mst_Patient.objects.filter(patient_id = body["patientId"])
-        if patient.exists():
-            visit = Visit(session_public_key = body["publicKey"], patient_id = patient.first())
+        # patient = mst_Patient.objects.filter(patient_id = body["patientId"])
+        # if patient.exists():
+        visits = Visit.objects.filter(visit_id=body["visitId"])
+        if visits.exists():
+            visit = visits.first()
+            visit.session_public_key = body["sessionPublicKey"]
             visit.save()
-            return JsonResponse({"visit_id": visit.visit_id})
-        return HttpResponseBadRequest("Patient doesn't exist")
+            return HttpResponse("Session Created")
+        return HttpResponseBadRequest("Visit doesn't exist")
     return HttpResponseBadRequest("Request should be a post request")
 
 @csrf_exempt
@@ -37,15 +40,19 @@ def generate_qr_string(request):
             return HttpResponse(status=404)
         if patient.exists():
             try:
-                latest_visit = Visit(session_public_key = body["publicKey"], patient_id = patient.first())
-                latest_visit.save()
+                employees = Employee.objects.filter(employee_id=body["employeeId"])
+                if employees.exists():
+                    employee = employees.first()
+                    latest_visit = Visit(session_public_key = "", patient_id = patient.first(), employee = employee)
+                    latest_visit.save()
+                else:
+                    return HttpResponseBadRequest("Employee doesn't exist")
             except Visit.DoesNotExist:
                 return HttpResponse(status=404)
             qr_json = {
                 "proxy_server": settings.PROXY_URL, 
                 "hospital_server": settings.HOSPITAL_URL, 
-                "generated_by": body["employeeId"], 
-                "session_public_key": latest_visit.session_public_key, 
+                "generated_by": body["employeeId"],
                 "visit_id": latest_visit.visit_id
             }       
             return JsonResponse(qr_json)
@@ -54,8 +61,8 @@ def generate_qr_string(request):
 
 
 def post_hashed_document(document, report, hospital_id, sc_endpoint):
-    payload = {'report_id': report.report_id, 'hospital_id': hospital_id, 'hashed_document': hashlib.sha256(document['document'].encode()).hexdigest()}
-    response = requests.post(sc_endpoint+'/addHashToBlockchain', params=payload)
+    payload = {'reportId': report.report_id, 'hospitalId': hospital_id, 'documentHash': hashlib.sha256(document['document'].encode()).hexdigest()}
+    response = requests.post(sc_endpoint+'/addHashToBlockchain', data=payload)
     if response.status_code == 200:
         return report.report_id
     elif response.status_code == 404:
@@ -75,6 +82,7 @@ def uploadDocumentBatch(request):
     if request.method == 'POST':
         body_unicode = request.body.decode('utf-8')
         body = json.loads(body_unicode)
+        print(body)
         visit = Visit.objects.filter(visit_id=body['visitId'])
         employee = Employee.objects.filter(employee_id=body['employeeId'])
         if visit.exists():
@@ -82,11 +90,13 @@ def uploadDocumentBatch(request):
                 listOfDocuments = body['documents']
                 reportIds = []
                 for index, document in enumerate(listOfDocuments):
+                    print('Inside')
                     if DocumentType.objects.filter(document_id=document['documentType']).exists():
                         id = uploadDocument(document, visit.first(), employee.first())
                         reportIds.append(id)
                     else:
                         reportIds.append(-1)
+                print(reportIds)
                 return JsonResponse({'reportIds': reportIds})
             return HttpResponseBadRequest("No Employee with given EmployeeId")
         return HttpResponseBadRequest("No visit with corrosponding visitId")
@@ -153,8 +163,8 @@ def secret_key_from_utf8(utf8_string: str) -> 'SecretKey':
 
 
 def get_hashed_document(sc_endpoint, report_id, hospital_id):
-    payload = {'report_id': report_id, 'hospital_id': hospital_id}
-    response = requests.post(sc_endpoint+'/getDocumentHash', params=payload)
+    payload = {'reportId': report_id, 'hospitalId': hospital_id}
+    response = requests.post(sc_endpoint+'/getDocumentHash', data=payload)
     if response.status_code == 200:
         body = response.json()
         hashed_document = body['result']
