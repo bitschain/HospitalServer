@@ -202,7 +202,7 @@ def add_documents(request):
 
                 cfrags = [cfrag]
                 decrypted_document = decrypt_reencrypted(
-                                                        # secret_key_from_utf8(HOSPITAL_PRIVATE_KEY), 
+                                                        secret_key_from_utf8(HOSPITAL_PRIVATE_KEY), 
                                                         patient_session_public_key, new_capsule, cfrags, encryptedDocument)
                 # decrypted_document = decrypt_reencrypted(secret_key_from_utf8(hospital_b_secret_key_utf8), patient_session_public_key, new_capsule, cfrags, encryptedDocument)
                 if hashlib.sha256(decrypted_document).hexdigest() == get_hashed_document(SMART_CONTRACT_ENDPOINT, report_id, hospital_id):
