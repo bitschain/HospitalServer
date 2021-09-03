@@ -11,4 +11,6 @@ urlpatterns = [
     path('download_document', views.download_document),
     path('get_documents', views.get_documents),
     path('add_documents', views.add_documents),
+    path('public_key', views.publish_public_key),
+    path('', views.home_page)
 ]
