@@ -230,3 +230,9 @@ def add_documents(request):
             return JsonResponse({'status': status})
         return HttpResponseBadRequest('Specified VisitId does not exist')
     return HttpResponseBadRequest('Must be a POST request')
+
+def publish_public_key(request):
+    return HttpResponse(HOSPITAL_PUBLIC_KEY)
+
+def home_page(request):
+    return HttpResponse("You've reached Hospital "+ str(HOSPITAL_ID))
